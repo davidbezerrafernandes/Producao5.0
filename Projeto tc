@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Analisador de Produção - Protótipo TCC</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
+        h1 { color: #2c3e50; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
+        textarea { width: 100%; height: 150px; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px; font-family: monospace; }
+        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
+        button:hover { background-color: #2980b9; }
+        .result-box { margin-top: 20px; padding: 15px; background-color: #e8f6f3; border-left: 5px solid #1abc9c; display: none; }
+        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
+        th { background-color: #2c3e50; color: white; }
+        .highlight { font-weight: bold; color: #d35400; }
+        .dica { font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>🔍 Descobrir Variável Determinante</h1>
+        <p>Cole seus dados do Excel abaixo. <br><strong>Formato:</strong> Primeira coluna deve ser o RESULTADO (Ex: Produção Total). As outras são as variáveis (Ex: Temp, Funcio, Velocidade).</p>
+        
+        <p class="dica">Dica: Copie o cabeçalho e os dados numéricos juntos.</p>
+        
+        <textarea id="dataInput" placeholder="Cole aqui (Ctrl+V) os dados direto do Excel...
+Exemplo:
+Produção	Temperatura	Funcionários
+100	25	5
+120	24	6
+90	28	4"></textarea>
+
+        <button onclick="analisarDados()">Analisar Correlação</button>
+
+        <div id="result" class="result-box">
+            <h3>Resultado da Análise:</h3>
+            <p id="conclusao"></p>
+            <div id="tabelaResultado"></div>
+        </div>
+    </div>
+
+    <script>
+        function analisarDados() {
+            const rawData = document.getElementById('dataInput').value.trim();
+            if (!rawData) { alert("Por favor, cole os dados primeiro."); return; }
+
+            // 1. Processar os dados (CSV/Tab)
+            const rows = rawData.split('\n').map(row => row.split(/\t|,|;/)); // Aceita Tab, Virgula ou Ponto e virgula
+            const headers = rows[0];
+            const data = rows.slice(1);
+
+            // Preparar colunas
+            let colunas = headers.map(() => []);
+            
+            data.forEach(row => {
+                row.forEach((val, index) => {
+                    if (val.trim() !== "") {
+                        colunas[index].push(parseFloat(val.replace(',', '.')));
+                    }
+                });
+            });
+
+            // A Coluna 0 é o Y (Desempenho/Produção)
+            const y = colunas[0];
+            let resultados = [];
+
+            // 2. Calcular Correlação para cada variável (X)
+            for (let i = 1; i < colunas.length; i++) {
+                let x = colunas[i];
+                let r = calcularCorrelacao(x, y);
+                resultados.push({
+                    nome: headers[i],
+                    correlacao: r,
+                    impacto: Math.abs(r) // Para saber a força, independente se é positiva ou negativa
+                });
+            }
+
+            // Ordenar pelo maior impacto
+            resultados.sort((a, b) => b.impacto - a.impacto);
+
+            // 3. Exibir Resultados
+            let html = "<table><tr><th>Variável</th><th>Correlação (Impacto)</th><th>Interpretação</th></tr>";
+            
+            resultados.forEach(res => {
+                let cor = res.correlacao > 0 ? "Positiva (Ajuda)" : "Negativa (Atrapalha)";
+                let forca = res.impacto > 0.7 ? "Muito Forte" : (res.impacto > 0.4 ? "Moderada" : "Fraca");
+                
+                html += `<tr>
+                    <td>${res.nome}</td>
+                    <td class="highlight">${res.correlacao.toFixed(4)}</td>
+                    <td>${forca} / ${cor}</td>
+                </tr>`;
+            });
+            html += "</table>";
+
+            const vencedor = resultados[0];
+            const textoVencedor = `A variável determinante é <strong>"${vencedor.nome}"</strong> com uma correlação de ${vencedor.correlacao.toFixed(2)}. <br>Isso significa que quando ela muda, a produção muda junto.`;
+
+            document.getElementById('tabelaResultado').innerHTML = html;
+            document.getElementById('conclusao').innerHTML = textoVencedor;
+            document.getElementById('result').style.display = 'block';
+        }
+
+        // Função Matemática: Correlação de Pearson
+        function calcularCorrelacao(x, y) {
+            let n = x.length;
+            let sum_x = 0, sum_y = 0, sum_xy = 0, sum_x2 = 0, sum_y2 = 0;
+
+            for (let i = 0; i < n; i++) {
+                sum_x += x[i];
+                sum_y += y[i];
+                sum_xy += x[i] * y[i];
+                sum_x2 += x[i] * x[i];
+                sum_y2 += y[i] * y[i];
+            }
+
+            let numerador = (n * sum_xy) - (sum_x * sum_y);
+            let denominador = Math.sqrt((n * sum_x2 - sum_x * sum_x) * (n * sum_y2 - sum_y * sum_y));
+
+            if (denominador === 0) return 0;
+            return numerador / denominador;
+        }
+    </script>
+</body>
+</html>
