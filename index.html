@@ -3,37 +3,185 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Analisador de Produção - Protótipo TCC</title>
+    <title>Operations Lab - Análise de Correlação</title>
     <style>
-        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 800px; margin: 0 auto; padding: 20px; background-color: #f4f4f9; }
-        h1 { color: #2c3e50; }
-        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); }
-        textarea { width: 100%; height: 150px; margin-bottom: 10px; border: 1px solid #ccc; padding: 10px; font-family: monospace; }
-        button { background-color: #3498db; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer; font-size: 16px; }
-        button:hover { background-color: #2980b9; }
-        .result-box { margin-top: 20px; padding: 15px; background-color: #e8f6f3; border-left: 5px solid #1abc9c; display: none; }
-        table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: center; }
-        th { background-color: #2c3e50; color: white; }
-        .highlight { font-weight: bold; color: #d35400; }
-        .dica { font-size: 0.9em; color: #7f8c8d; margin-bottom: 5px; }
+        :root { --primary: #2563eb; --bg: #f8fafc; --text: #334155; }
+        body { font-family: 'Segoe UI', system-ui, sans-serif; max-width: 900px; margin: 0 auto; padding: 20px; background-color: var(--bg); color: var(--text); line-height: 1.6; }
+        
+        .card { background: white; padding: 25px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); margin-bottom: 20px; border: 1px solid #e2e8f0; }
+        
+        h1 { color: var(--primary); margin-top: 0; font-size: 1.8rem; }
+        h2 { font-size: 1.2rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; margin-top: 0; }
+        
+        /* Estilo da área de teoria (Novidade) */
+        details { background-color: #f1f5f9; padding: 10px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #cbd5e1; }
+        summary { cursor: pointer; font-weight: bold; color: var(--primary); outline: none; }
+        .theory-content { margin-top: 10px; font-size: 0.9rem; color: #475569; }
+        .theory-content ul { margin: 5px 0; padding-left: 20px; }
+
+        textarea { width: 100%; height: 150px; border: 2px solid #e2e8f0; border-radius: 8px; padding: 12px; font-family: monospace; font-size: 14px; box-sizing: border-box; resize: vertical; }
+        textarea:focus { border-color: var(--primary); outline: none; }
+
+        .btn-group { margin-top: 15px; display: flex; gap: 10px; }
+        
+        button { background-color: var(--primary); color: white; border: none; padding: 12px 24px; border-radius: 6px; cursor: pointer; font-weight: 600; font-size: 1rem; transition: background 0.2s; }
+        button:hover { background-color: #1d4ed8; }
+        button.secondary { background-color: #e2e8f0; color: #475569; }
+        button.secondary:hover { background-color: #cbd5e1; }
+
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { padding: 12px; text-align: left; border-bottom: 1px solid #e2e8f0; }
+        th { background-color: #f8fafc; color: #475569; font-weight: 600; }
+        
+        .badge { padding: 4px 8px; border-radius: 4px; font-size: 0.85rem; font-weight: bold; }
+        .alta { background-color: #dcfce7; color: #166534; } 
+        .media { background-color: #fef9c3; color: #854d0e; } 
+        .baixa { background-color: #f1f5f9; color: #64748b; } 
     </style>
 </head>
 <body>
 
-    <div class="container">
-        <h1>🔍 Descobrir Variável Determinante</h1>
-        <p>Cole seus dados do Excel abaixo. <br><strong>Formato:</strong> Primeira coluna deve ser o RESULTADO (Ex: Produção Total). As outras são as variáveis (Ex: Temp, Funcio, Velocidade).</p>
+    <div class="card">
+        <h1>📊 Operations Lab</h1>
         
-        <p class="dica">Dica: Copie o cabeçalho e os dados numéricos juntos.</p>
-        
-        <textarea id="dataInput" placeholder="Cole aqui (Ctrl+V) os dados direto do Excel...
-Exemplo:
-Produção	Temperatura	Funcionários
-100	25	5
-120	24	6
-90	28	4"></textarea>
+        <details>
+            <summary>📚 Clique para ver a Base Teórica (Metodologia)</summary>
+            <div class="theory-content">
+                <p>Esta ferramenta utiliza o <strong>Coeficiente de Correlação de Pearson ($r$)</strong> para identificar quais variáveis de entrada (Inputs) impactam o resultado do processo (Outputs).</p>
+                <ul>
+                    <li><strong>Variável Dependente (Y):</strong> É o resultado que você quer melhorar (ex: Produtividade, Lucro). Deve ser a <strong>1ª Coluna</strong>.</li>
+                    <li><strong>Variáveis Independentes (X):</strong> São os fatores que controlam o processo (ex: Temperatura, Mão de obra, Velocidade).</li>
+                    <li><strong>Interpretação:</strong> Baseado em <em>Slack et al. (2009)</em> e princípios de <em>Six Sigma</em>:
+                        <ul>
+                            <li><strong>Alta Correlação (>0.7):</strong> Indica uma "Variável Determinante". É aqui que o gestor deve focar.</li>
+                            <li><strong>Correlação Negativa:</strong> Quando um fator aumenta, o desempenho cai (relação inversa).</li>
+                        </ul>
+                    </li>
+                </ul>
+            </div>
+        </details>
 
+        <label for="dataInput"><strong>Entrada de Dados:</strong> (Copie do Excel e cole abaixo)</label>
+        <p style="font-size: 0.85rem; color: #64748b; margin-top: 0;">Lembre-se: A 1ª coluna deve ser o seu OBJETIVO (Output).</p>
+        
+        <textarea id="dataInput" placeholder="Exemplo:
+Produção	Funcionarios	Temperatura
+100	10	25
+120	12	24
+..."></textarea>
+
+        <div class="btn-group">
+            <button onclick="analisarDados()">🚀 Calcular Correlação</button>
+            <button class="secondary" onclick="carregarExemplo()">Carregar Exemplo Didático</button>
+        </div>
+    </div>
+
+    <div id="resultArea" class="card" style="display: none;">
+        <h2>📋 Relatório de Análise</h2>
+        <p>Objetivo Analisado (Variável Y): <strong id="targetName" style="color: #d97706;">---</strong></p>
+        
+        <div id="conclusaoBox" style="margin-bottom: 20px; font-size: 1.1em;"></div>
+        
+        <div style="overflow-x: auto;">
+            <table id="tabelaResultados">
+                <thead>
+                    <tr>
+                        <th>Variável de Processo (X)</th>
+                        <th>Índice Pearson ($r$)</th>
+                        <th>Impacto no Processo</th>
+                    </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
+    </div>
+
+    <script>
+        function carregarExemplo() {
+            // Exemplo baseado em um cenário de fábrica onde a velocidade afeta a produção
+            const exemplo = `Produção_Total	Qtd_Funcionarios	Temperatura_Fabrica	Velocidade_Esteira
+500	10	22	2
+550	11	23	2.5
+480	10	21	1.8
+700	12	22	4.0
+680	12	24	3.8
+510	10	25	2.1
+720	13	22	4.2`;
+            document.getElementById('dataInput').value = exemplo;
+        }
+
+        function analisarDados() {
+            const rawData = document.getElementById('dataInput').value.trim();
+            if (!rawData) { alert("Por favor, insira dados."); return; }
+
+            const rows = rawData.split('\n').map(r => r.trim()).filter(r => r);
+            
+            // Detecção automática de separador
+            const firstRow = rows[0];
+            let separator = '\t';
+            if (firstRow.includes('\t')) separator = '\t';
+            else if (firstRow.includes(';')) separator = ';';
+            else if (firstRow.includes(',')) separator = ',';
+
+            const headers = rows[0].split(separator).map(h => h.trim());
+            const dataRows = rows.slice(1);
+
+            if (headers.length < 2) {
+                alert("Erro: Insira pelo menos 2 colunas."); return;
+            }
+
+            let colunas = headers.map(() => []);
+            
+            dataRows.forEach(rowStr => {
+                const vals = rowStr.split(separator);
+                vals.forEach((v, i) => {
+                    if (i < colunas.length) {
+                        let num = parseFloat(v.replace(',', '.'));
+                        if (!isNaN(num)) colunas[i].push(num);
+                    }
+                });
+            });
+
+            const nomeTarget = headers[0];
+            const y = colunas[0]; 
+            let resultados = [];
+
+            for (let i = 1; i < colunas.length; i++) {
+                let x = colunas[i];
+                if (x.length === y.length && x.length > 0) {
+                    let r = calcularCorrelacao(x, y);
+                    resultados.push({
+                        nome: headers[i],
+                        correlacao: r,
+                        abs: Math.abs(r)
+                    });
+                }
+            }
+
+            resultados.sort((a, b) => b.abs - a.abs);
+
+            document.getElementById('targetName').innerText = nomeTarget;
+            const tbody = document.querySelector('#tabelaResultados tbody');
+            tbody.innerHTML = '';
+
+            resultados.forEach(res => {
+                let classe = 'baixa';
+                let texto = 'Baixo';
+                
+                if (res.abs > 0.75) { classe = 'alta'; texto = 'Determinante (Crítico)'; }
+                else if (res.abs > 0.4) { classe = 'media'; texto = 'Moderado'; }
+
+                let sinal = res.correlacao > 0 ? "+" : "-"; // Positiva ou Negativa
+
+                const tr = `<tr>
+                    <td>${res.nome}</td>
+                    <td><strong>${res.correlacao.toFixed(3)}</strong> (${sinal})</td>
+                    <td><span class="badge ${classe}">${texto}</span></td>
+                </tr>`;
+                tbody.innerHTML += tr;
+            });
+
+            if (
         <button onclick="analisarDados()">Analisar Correlação</button>
 
         <div id="result" class="result-box">
